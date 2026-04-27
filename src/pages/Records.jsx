@@ -21,46 +21,98 @@ function Records() {
   const observerTarget = useRef(null);
   const isInInitialMount = useRef(true);
 
-  const handleSearchPlants = async () => {
-    // TODO search from the the backend; in case that all records is not yet loaded
+  const handleSearchPlants = async (query) => {
+    if (!query.trim()) {
+      setCurrentPage(1);
+      setHasMore(true);
+      handleLoadRecords(1, false);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const response = await api.get(`/plants/search`, {
+        params: { q: query }
+      });
+      setRecords(response.data?.data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Error searching records.");
+      setRecords([]);
+    } finally {
+      setIsLoading(false);
+    }
   }
+  
   const handleLoadRecords = async (page = 1, append = false) => {
-    //TODO: load the data from the database
-    //TODO: implement paginated data loading
+    try {
+      if (!append) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      
+      const response = await api.get(`/plants`, {
+        params: { page, per_page: 10 }
+      });
+      
+      const newRecords = response.data?.data || [];
+      
+      if (append) {
+        setRecords(prev => [...prev, ...newRecords]);
+      } else {
+        setRecords(newRecords);
+      }
+      
+      // Check if there are more records
+      setHasMore(newRecords.length === 10);
+    } catch (error) {
+      console.error(error);
+      toast.error("Error loading records.");
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
   }
   const handleAddRecord = async (formData) => {
     try {
-      //TODO: make add new record functional
+      const response = await api.post(`/plants`, formData);
+      setRecords(prev => [response.data?.data || formData, ...prev]);
       toast.success("New record saved.");
     } catch (error) {
       console.error(error);
-      toast.error("Error encountered while saving record.");
+      toast.error(error?.message || "Error encountered while saving record.");
     }
 
     setIsModalOpen(false)
   }
+  
   const handleUpdateRecord = async (data) => {
     try {
-      //TODO make update record functional
+      const response = await api.put(`/plants/${data.id}`, data);
+      setRecords(prev => prev.map(record => 
+        record.id === data.id ? response.data?.data || data : record
+      ));
       toast.success("Plant data updated.");
     } catch (error) {
       console.error(error);
-      toast.error("Error encountered during update.");
+      toast.error(error?.message || "Error encountered during update.");
     } finally {
       setIsEditRecord(false);
     }
   }
+  
   const handleDeleteRecord = async (data) => {
     try {
       const isDelete = confirm("Are you sure you want to delete this record?");
       if (isDelete) {
-        await api.delete(`plants/${data.id}`, data);
+        await api.delete(`/plants/${data.id}`);
         setRecords(prev => prev?.filter( val => data.id !== val.id))
         toast.success("Plant data deleted.");
       }
     } catch (error) {
       console.error(error)
-      toast.error("Error encountered while deleting record.");
+      toast.error(error?.message || "Error encountered while deleting record.");
     }
   }
   const filteredRecords = records.filter(record =>
@@ -142,7 +194,10 @@ function Records() {
             type="text"
             placeholder="Search records..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              handleSearchPlants(e.target.value);
+            }}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
               focus:ring-green-500 focus:border-transparent outline-none"
           />
@@ -150,7 +205,6 @@ function Records() {
       </div>
 
       {/* Records Table */}
-      {/* TODO implement pagination plants table */}
       <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto max-h-[580px] overflow-y-auto">
           <table className="relative w-full">
@@ -215,7 +269,7 @@ function Records() {
                           </tr>
                         )
                       }
-                      {/* intersection observer target */}
+                      {/* intersection observer target for pagination */}
                       {
                         !searchTerm && hasMore && !isLoadingMore && (
                           <tr ref={observerTarget}>
@@ -239,10 +293,24 @@ function Records() {
           </div>
         )}
 
+        {/* Pagination Info */}
+        {!searchTerm && records.length > 0 && (
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+            <span className="text-sm text-gray-600">
+              Showing <span className="font-semibold">{records.length}</span> records
+            </span>
+            {hasMore ? (
+              <span className="text-sm text-gray-500">Scroll to load more</span>
+            ) : (
+              <span className="text-sm text-gray-400">No more records to load</span>
+            )}
+          </div>
+        )}
+
         {/* End of Records Indicator */}
         {!hasMore && records.length > 0 && !searchTerm && (
           <div className="text-center py-4 text-gray-400 text-sm border-t border-gray-100">
-            No more records to load
+            You've reached the end
           </div>
         )}
       </div>
