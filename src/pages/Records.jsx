@@ -22,6 +22,7 @@ function Records() {
   const isInInitialMount = useRef(true);
 
   const handleSearchPlants = async (query) => {
+    // feat: search from the backend; in case that all records is not yet loaded
     if (!query.trim()) {
       setCurrentPage(1);
       setHasMore(true);
@@ -196,7 +197,7 @@ function Records() {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              handleSearchPlants(e.target.value);
+              handleSearchPlants(e.target.value); // feat: search from the backend
             }}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
               focus:ring-green-500 focus:border-transparent outline-none"
