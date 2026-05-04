@@ -11,7 +11,7 @@ function ModalNewRecord({ isOpen, onClose, onSubmit }) {
     seedling_count: '',
     batch_name: '',
     starting_fund: '',
-    supplier: ''
+    seedling_source: ''
   }
 
   const [formData, setFormData] = useState(initialFormData)
