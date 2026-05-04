@@ -13,6 +13,7 @@ function Records() {
   const [dataToUpdate, setDataToUpdate] = useState(null);
   const [isEditRecord, setIsEditRecord] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(null); // id of deleting record
   //pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -94,6 +95,7 @@ function Records() {
     try {
       const isDelete = confirm("Are you sure you want to delete this record?");
       if (isDelete) {
+        setIsDeleting(data.id);
         await api.delete(`/plants/${data.id}`);
         setRecords(prev => prev?.filter( val => data.id !== val.id))
         toast.success("Plant data deleted.");
@@ -101,6 +103,8 @@ function Records() {
     } catch (error) {
       console.error(error)
       toast.error(error?.message || "Error encountered while deleting record.");
+    } finally {
+      setIsDeleting(null);
     }
   }
   const filteredRecords = records.filter(record =>
@@ -196,7 +200,9 @@ function Records() {
                             <button className="cursor-pointer text-red-600 hover:text-red-700 p-2 
                               hover:bg-red-50 rounded"
                               onClick={() => { handleDeleteRecord(record) }}
-                              title="Delete Record">
+                                title="Delete Record"
+                                disabled={isDeleting === record.id}
+                              >
                               <FaTrash />
                             </button>
                           </div>
