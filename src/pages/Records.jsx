@@ -7,7 +7,6 @@ import { api } from '../api';
 import { toast } from 'sonner';
 
 function Records() {
-  //TODO: add loading icon while ongoing ang loading ng records.
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -206,7 +205,12 @@ function Records() {
       </div>
 
       {/* Records Table */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+            <PlantLoading size='2xl' variant='pulse' text="Loading records" />
+          </div>
+        )}
         <div className="overflow-x-auto max-h-[580px] overflow-y-auto">
           <table className="relative w-full">
             <thead className="bg-green-50 sticky top-0 z-10">
@@ -224,75 +228,68 @@ function Records() {
             <tbody>
 
               {
-                isLoading && records.length === 0 ?
-                  (
-                    <tr>
-                      <td colSpan={7} className='py-10'>
-                        <PlantLoading size='2xl' variant='pulse' text="Loading records" />
-                      </td>
-                    </tr>
-                  ) : (
-                    <>
-                      {filteredRecords.map((record) => (
-                        <tr key={record.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-6 text-sm text-gray-800 font-medium">{record.name}</td>
-                          <td className="py-4 px-6 text-sm text-gray-600">{record?.variety || "-"}</td>
-                          <td className="py-4 px-6 text-sm text-gray-600">{record?.batch_name || "-"}</td>
-                          <td className="py-4 px-6 text-sm text-gray-800 font-medium">{record?.seedling_source || "-"}</td>
-                          <td className="py-4 px-6 text-sm text-gray-600">{record?.seedling_count || "-"}</td>
-                          <td className="py-4 px-6 text-sm text-gray-600">{record?.starting_fund || "0"}</td>
-                          <td className="py-4 px-6 text-sm text-gray-600">{record?.date_planted || "-"}</td>
-                          <td className="py-4 px-6">
-                            <div className="flex gap-2">
-                              <button className="cursor-pointer text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
-                                title="Edit Record"
-                                onClick={() => { setDataToUpdate(record); setIsEditRecord(true) }}>
-                                <FaEdit />
-                              </button>
-                              <button className="cursor-pointer text-red-600 hover:text-red-700 p-2 
-                                hover:bg-red-50 rounded"
-                                onClick={() => { handleDeleteRecord(record) }}
-                                title="Delete Record">
-                                <FaTrash />
-                              </button>
-                            </div>
+                filteredRecords.length === 0 && !isLoading ? (
+                  <tr>
+                    <td colSpan={8} className='py-10 text-center text-gray-500'>
+                      {searchTerm ? "No records found matching your search." : "No records found."}
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {filteredRecords.map((record) => (
+                      <tr key={record.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-4 px-6 text-sm text-gray-800 font-medium">{record.name}</td>
+                        <td className="py-4 px-6 text-sm text-gray-600">{record?.variety || "-"}</td>
+                        <td className="py-4 px-6 text-sm text-gray-600">{record?.batch_name || "-"}</td>
+                        <td className="py-4 px-6 text-sm text-gray-800 font-medium">{record?.seedling_source || "-"}</td>
+                        <td className="py-4 px-6 text-sm text-gray-600">{record?.seedling_count || "-"}</td>
+                        <td className="py-4 px-6 text-sm text-gray-600">{record?.starting_fund || "0"}</td>
+                        <td className="py-4 px-6 text-sm text-gray-600">{record?.date_planted || "-"}</td>
+                        <td className="py-4 px-6">
+                          <div className="flex gap-2">
+                            <button className="cursor-pointer text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded"
+                              title="Edit Record"
+                              onClick={() => { setDataToUpdate(record); setIsEditRecord(true) }}>
+                              <FaEdit />
+                            </button>
+                            <button className="cursor-pointer text-red-600 hover:text-red-700 p-2 
+                              hover:bg-red-50 rounded"
+                              onClick={() => { handleDeleteRecord(record) }}
+                              title="Delete Record">
+                              <FaTrash />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {/* loading more indicator */}
+                    {
+                      isLoadingMore && (
+                        <tr>
+                          <td colSpan={8} className='py-6'>
+                            <PlantLoading size='lg' variant='pulse' text="Loading more records..." />
                           </td>
                         </tr>
-                      ))}
+                      )
+                    }
+                    {/* intersection observer target for pagination */}
+                    {
+                      !searchTerm && hasMore && !isLoadingMore && (
+                        <tr ref={observerTarget}>
+                          <td colSpan={8} className='py-4 text-center text-gray-400 text-sm'>
+                            Scroll for more...
+                          </td>
+                        </tr>
+                      )
+                    }
 
-                      {/* loading more indicator */}
-                      {
-                        isLoadingMore && (
-                          <tr>
-                            <td colSpan={8} className='py-6'>
-                              <PlantLoading size='lg' variant='pulse' text="Loading more records..." />
-                            </td>
-                          </tr>
-                        )
-                      }
-                      {/* intersection observer target for pagination */}
-                      {
-                        !searchTerm && hasMore && !isLoadingMore && (
-                          <tr ref={observerTarget}>
-                            <td colSpan={8} className='py-4 text-center text-gray-400 text-sm'>
-                              Scroll for more...
-                            </td>
-                          </tr>
-                        )
-                      }
-
-                    </>
-                  )
+                  </>
+                )
               }
             </tbody>
           </table>
         </div>
-
-        {searchTerm && filteredRecords.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No records found matching your search.
-          </div>
-        )}
 
         {/* Pagination Info */}
         {!searchTerm && records.length > 0 && (
