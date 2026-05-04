@@ -39,7 +39,7 @@ function ModalEditRecord({ isOpen, onClose, onSubmit, data }) {
       seedling_count: '',
       batch_name: '',
       starting_fund: '',
-      supplier: ''
+      seedling_source: ''
     })
   }
   const handleClose = () => {
@@ -49,10 +49,10 @@ function ModalEditRecord({ isOpen, onClose, onSubmit, data }) {
       variety: '',
       notes: '',
       date_planted: '',
-      quantity: '',
+      seedling_count: '',
       batch_name: '',
       starting_fund: '',
-      supplier: ''
+      seedling_source: ''
     })
     onClose()
   }
