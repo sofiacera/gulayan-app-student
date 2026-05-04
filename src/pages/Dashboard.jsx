@@ -1,34 +1,58 @@
 import { useEffect, useState } from "react";
-import { FaLeaf, FaUsers, FaBoxOpen, FaChartLine } from "react-icons/fa";
-import axios from "axios";
+import { FaLeaf, FaUsers } from "react-icons/fa";
+import { api } from '../api';
 
 function Dashboard() {
  
   const [plants, setPlants] = useState([]);
+  const [totalPlants, setTotalPlants] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const stats = [
     {
       title: "Total Plants",
-      value: "156",
+      value: totalPlants.toString(),
       icon: FaLeaf,
       color: "bg-green-100 text-green-600",
     },
     {
       title: "Estimated Counts",
-      value: "1,234",
+      value: plants.reduce((sum, plant) => sum + (Number(plant.seedling_count) || 0), 0).toString(),
       icon: FaUsers,
       color: "bg-blue-100 text-blue-600",
     }
   ];
-  //Helloo
-
 
   useEffect(() => {
-    // TODO fetch plants data from server
+    const fetchPlants = async () => {
+      setIsLoading(true);
+      try {
+        const response = await api.get('/plants', {
+          params: {
+            page: 1,
+            per_page: 5,
+          }
+        });
+        setPlants(response.data?.data || []);
+        setTotalPlants(response.data?.meta?.total ?? 0);
+      } catch (error) {
+        console.error('Error fetching plants data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPlants();
   }, []);
 
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard</h1>
+
+      {isLoading && (
+        <div className="mb-6 rounded-lg bg-white border border-gray-100 p-4 text-sm text-gray-600">
+          Loading plants data...
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

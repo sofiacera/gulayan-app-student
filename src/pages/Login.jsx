@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { api } from '../api'
 
 function Login() {
@@ -9,6 +10,7 @@ function Login() {
     password: '',
     rememberMe: false
   })
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -20,8 +22,25 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    //TODO make the login process functional
+    setIsLoading(true)
 
+    try {
+      const response = await api.post('/login', formData)
+      const token = response.data?.data?.token
+
+      if (!token) {
+        throw new Error('Login failed. No token returned.')
+      }
+
+      localStorage.setItem('token', token)
+      toast.success('Logged in successfully.')
+      navigate('/dashboard')
+    } catch (error) {
+      console.error(error)
+      toast.error(error?.message || error?.response?.data?.message || 'Unable to login. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -87,11 +106,12 @@ function Login() {
             {/* TODO disable and show loading icon while logging in. */}
             <button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold 
                             hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 
-                            focus:ring-offset-2 transition duration-200 shadow-md"
+                            focus:ring-offset-2 transition duration-200 shadow-md disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Sign In
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
@@ -110,8 +130,11 @@ function Login() {
           <p className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{' '}
             <button
+              type="button"
+              disabled={isLoading}
               onClick={() => navigate('/signup')}
-              className="cursor-pointer text-green-600 hover:text-green-700 font-semibold">
+              className="cursor-pointer text-green-600 hover:text-green-700 font-semibold disabled:cursor-not-allowed disabled:text-gray-400"
+            >
               Sign up for free
             </button>
           </p>

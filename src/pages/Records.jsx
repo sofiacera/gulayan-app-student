@@ -16,6 +16,8 @@ function Records() {
   const [isLoading, setIsLoading] = useState(false);
   //pagination states
   const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const observerTarget = useRef(null);
@@ -33,13 +35,21 @@ function Records() {
     try {
       setIsLoading(true);
       const response = await api.get(`/plants/search`, {
-        params: { q: query }
+        params: { q: query, per_page: 10 }
       });
+      const meta = response.data?.meta || {};
       setRecords(response.data?.data || []);
+      setCurrentPage(meta.current_page || 1);
+      setLastPage(meta.last_page || 1);
+      setTotalRecords(meta.total ?? (response.data?.data?.length || 0));
+      setHasMore((meta.current_page ?? 1) < (meta.last_page ?? 1));
     } catch (error) {
       console.error(error);
       toast.error("Error searching records.");
       setRecords([]);
+      setHasMore(false);
+      setTotalRecords(0);
+      setLastPage(1);
     } finally {
       setIsLoading(false);
     }
@@ -53,11 +63,16 @@ function Records() {
         setIsLoadingMore(true);
       }
       
+      const perPage = 10;
       const response = await api.get(`/plants`, {
-        params: { page, per_page: 10 }
+        params: { page, per_page: perPage }
       });
       
       const newRecords = response.data?.data || [];
+      const meta = response.data?.meta || {};
+      const current = meta.current_page || page;
+      const last = meta.last_page || (newRecords.length === perPage ? page + 1 : page);
+      const total = meta.total ?? (append ? records.length + newRecords.length : newRecords.length);
       
       if (append) {
         setRecords(prev => [...prev, ...newRecords]);
@@ -65,8 +80,10 @@ function Records() {
         setRecords(newRecords);
       }
       
-      // Check if there are more records
-      setHasMore(newRecords.length === 10);
+      setCurrentPage(current);
+      setLastPage(last);
+      setTotalRecords(total);
+      setHasMore(current < last);
     } catch (error) {
       console.error(error);
       toast.error("Error loading records.");
@@ -227,7 +244,7 @@ function Records() {
                 isLoading && records.length === 0 ?
                   (
                     <tr>
-                      <td colSpan={7} className='py-10'>
+                      <td colSpan={8} className='py-10'>
                         <PlantLoading size='2xl' variant='pulse' text="Loading records" />
                       </td>
                     </tr>
@@ -296,15 +313,26 @@ function Records() {
 
         {/* Pagination Info */}
         {!searchTerm && records.length > 0 && (
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-3">
             <span className="text-sm text-gray-600">
-              Showing <span className="font-semibold">{records.length}</span> records
+              Showing <span className="font-semibold">{records.length}</span> of <span className="font-semibold">{totalRecords}</span> records
             </span>
-            {hasMore ? (
-              <span className="text-sm text-gray-500">Scroll to load more</span>
-            ) : (
-              <span className="text-sm text-gray-400">No more records to load</span>
-            )}
+            <div className="flex gap-2">
+              <button
+                disabled={currentPage === 1 || isLoading}
+                onClick={() => handleLoadRecords(Math.max(1, currentPage - 1), false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                disabled={!hasMore || isLoading}
+                onClick={() => handleLoadRecords(currentPage + 1, false)}
+                className="px-4 py-2 rounded-lg border border-green-600 text-white bg-green-600 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
 

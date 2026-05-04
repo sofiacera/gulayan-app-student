@@ -49,7 +49,7 @@ function ModalEditRecord({ isOpen, onClose, onSubmit, data }) {
       variety: '',
       notes: '',
       date_planted: '',
-      quantity: '',
+      seedling_count: '',
       batch_name: '',
       starting_fund: '',
       supplier: ''
