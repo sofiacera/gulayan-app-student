@@ -1,29 +1,54 @@
 import { useEffect, useState } from "react";
 import { FaLeaf, FaUsers, FaBoxOpen, FaChartLine } from "react-icons/fa";
-import axios from "axios";
+import { api } from "../api";
 
 function Dashboard() {
  
   const [plants, setPlants] = useState([]);
-  const stats = [
+  const [stats, setStats] = useState([
     {
       title: "Total Plants",
-      value: "156",
+      value: "0",
       icon: FaLeaf,
       color: "bg-green-100 text-green-600",
     },
     {
       title: "Estimated Counts",
-      value: "1,234",
+      value: "0",
       icon: FaUsers,
       color: "bg-blue-100 text-blue-600",
     }
-  ];
+  ]);
   //Helloo
 
 
   useEffect(() => {
-    // TODO fetch plants data from server
+    const fetchPlants = async () => {
+      try {
+        const response = await api.get('/plants', { params: { per_page: 10000 } }); // fetch all or large number
+        const plantsData = response.data?.data || [];
+        setPlants(plantsData);
+        const totalPlants = plantsData.length;
+        const estimatedCounts = plantsData.reduce((sum, plant) => sum + (plant.seedling_count || 0), 0);
+        setStats([
+          {
+            title: "Total Plants",
+            value: totalPlants.toString(),
+            icon: FaLeaf,
+            color: "bg-green-100 text-green-600",
+          },
+          {
+            title: "Estimated Counts",
+            value: estimatedCounts.toString(),
+            icon: FaUsers,
+            color: "bg-blue-100 text-blue-600",
+          }
+        ]);
+      } catch (error) {
+        console.error('Error fetching plants:', error);
+      }
+    };
+    fetchPlants();
   }, []);
 
   return (
