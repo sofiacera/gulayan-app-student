@@ -231,7 +231,21 @@ function Records() {
             >
               Previous
             </button>
-            <span className="text-sm text-gray-600">Page {currentPage}</span>
+            <span className="text-sm text-gray-600 flex items-center gap-2">
+              Page 
+              <input
+                type="number"
+                min="1"
+                value={currentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value) || 1;
+                  setCurrentPage(page);
+                  handleLoadRecords(page, false);
+                }}
+                className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                disabled={isLoading}
+              />
+            </span>
             <button
               onClick={() => {
                 const next = currentPage + 1;
