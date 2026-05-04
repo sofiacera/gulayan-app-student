@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { FaSearch, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import ModalNewRecord from './records/ModalNewRecord';
 import ModalEditRecord from './records/ModalEditRecord';
@@ -16,9 +16,6 @@ function Records() {
   //pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const observerTarget = useRef(null);
-  const isInInitialMount = useRef(true);
 
   const handleSearchPlants = async (query) => {
     // feat: search from the backend; in case that all records is not yet loaded
@@ -44,13 +41,9 @@ function Records() {
     }
   }
   
-  const handleLoadRecords = async (page = 1, append = false) => {
+  const handleLoadRecords = async (page = 1) => {
     try {
-      if (!append) {
-        setIsLoading(true);
-      } else {
-        setIsLoadingMore(true);
-      }
+      setIsLoading(true);
       
       const response = await api.get(`/plants`, {
         params: { page, per_page: 10 }
@@ -58,11 +51,7 @@ function Records() {
       
       const newRecords = response.data?.data || [];
       
-      if (append) {
-        setRecords(prev => [...prev, ...newRecords]);
-      } else {
-        setRecords(newRecords);
-      }
+      setRecords(newRecords);
       
       // Check if there are more records
       setHasMore(newRecords.length === 10);
@@ -71,7 +60,6 @@ function Records() {
       toast.error("Error loading records.");
     } finally {
       setIsLoading(false);
-      setIsLoadingMore(false);
     }
   }
   const handleAddRecord = async (formData) => {
@@ -120,57 +108,10 @@ function Records() {
     record.variety?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     record.seedling_source?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const loadMore = useCallback(() => {
-    if (!isLoadingMore && hasMore && !searchTerm) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      handleLoadRecords(nextPage, true);
-    }
-  }, [isLoadingMore, hasMore, currentPage, searchTerm]);
-
   // initial record loading
   useEffect(() => {
     handleLoadRecords(1, false);
   }, []);
-  // intersection observer for infine scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      }, { threshold: 0.1 }
-    );
-
-    const currentTarget = observerTarget.current;
-
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    } else {
-      console.log("No target to observer.");
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    }
-  }, [loadMore]);
-  // reset pagination when searching
-  useEffect(() => {
-    if (isInInitialMount.current) {
-      isInInitialMount.current = false;
-      return;
-    }
-    if (searchTerm) {
-      setCurrentPage(1);
-      setHasMore(false);
-    } else {
-      setCurrentPage(1);
-      setHasMore(true);
-      handleLoadRecords(1, false);
-    }
-  }, [searchTerm]);
 
   return (
     <div>
@@ -263,27 +204,6 @@ function Records() {
                       </tr>
                     ))}
 
-                    {/* loading more indicator */}
-                    {
-                      isLoadingMore && (
-                        <tr>
-                          <td colSpan={8} className='py-6'>
-                            <PlantLoading size='lg' variant='pulse' text="Loading more records..." />
-                          </td>
-                        </tr>
-                      )
-                    }
-                    {/* intersection observer target for pagination */}
-                    {
-                      !searchTerm && hasMore && !isLoadingMore && (
-                        <tr ref={observerTarget}>
-                          <td colSpan={8} className='py-4 text-center text-gray-400 text-sm'>
-                            Scroll for more...
-                          </td>
-                        </tr>
-                      )
-                    }
-
                   </>
                 )
               }
@@ -294,21 +214,29 @@ function Records() {
         {/* Pagination Info */}
         {!searchTerm && records.length > 0 && (
           <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-            <span className="text-sm text-gray-600">
-              Showing <span className="font-semibold">{records.length}</span> records
-            </span>
-            {hasMore ? (
-              <span className="text-sm text-gray-500">Scroll to load more</span>
-            ) : (
-              <span className="text-sm text-gray-400">No more records to load</span>
-            )}
-          </div>
-        )}
-
-        {/* End of Records Indicator */}
-        {!hasMore && records.length > 0 && !searchTerm && (
-          <div className="text-center py-4 text-gray-400 text-sm border-t border-gray-100">
-            You've reached the end
+            <button
+              onClick={() => {
+                const prev = currentPage - 1;
+                setCurrentPage(prev);
+                handleLoadRecords(prev, false);
+              }}
+              disabled={currentPage === 1 || isLoading}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">Page {currentPage}</span>
+            <button
+              onClick={() => {
+                const next = currentPage + 1;
+                setCurrentPage(next);
+                handleLoadRecords(next, false);
+              }}
+              disabled={!hasMore || isLoading}
+              className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
