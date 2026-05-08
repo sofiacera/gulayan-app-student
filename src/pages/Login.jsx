@@ -12,6 +12,12 @@ function Login() {
     rememberMe: false
   })
 
+  const handleSignUpClick = () => {
+    if (window.confirm("Are you sure you want to sign up?")) {
+      navigate('/signup');
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
     setFormData(prev => ({
@@ -117,7 +123,7 @@ function Login() {
           <p className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{' '}
             <button
-              onClick={() => navigate('/signup')}
+              onClick={handleSignUpClick}
               disabled={isLoading}
               className={`cursor-pointer text-green-600 hover:text-green-700 font-semibold ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
