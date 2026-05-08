@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { FaSpinner } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { FaSpinner } from 'react-icons/fa'
 
 function Login() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,9 +30,24 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    //TODO make the login process functional
+    setError('') // Clear previous errors
 
-    setIsLoading(false)
+    try {
+      const response = await api.post('/login', formData)
+      if (response.status === 200) {
+        // Assuming the server returns a token
+        const token = response.data.token
+        localStorage.setItem('token', token) // Store the token
+        navigate('/') // Redirect to dashboard
+      } else {
+        setError('Invalid credentials') // Set error message
+      }
+    } catch (error) {
+      setError('An error occurred while logging in') // Set error message
+      console.error('Login error:', error)
+    } finally {
+      setIsLoading(false)
+    }
 
   }
 
@@ -56,7 +72,8 @@ function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-green-100">
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Field */}
+            {error && <div className="text-red-500 mb-4">{error}</div>}
+            {error && <div className="text-red-500 mb-4">{error}</div>}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
