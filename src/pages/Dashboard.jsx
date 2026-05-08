@@ -32,13 +32,13 @@ function Dashboard() {
         const estimatedCounts = plantsData.reduce((sum, plant) => sum + (plant.seedling_count || 0), 0);
         setStats([
           {
-            title: "Total Plants",
+title: "Total Plants",
             value: totalPlants.toString(),
             icon: FaLeaf,
             color: "bg-green-100 text-green-600",
           },
           {
-            title: "Estimated Counts",
+title: "Seedling Counts",
             value: estimatedCounts.toString(),
             icon: FaUsers,
             color: "bg-blue-100 text-blue-600",
@@ -93,7 +93,7 @@ function Dashboard() {
                   Variety
                 </th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                  Estimated Count
+Seedling Counts
                 </th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
                   Date Planted
@@ -113,7 +113,7 @@ function Dashboard() {
                     {plant.variety}
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-600">
-                    {plant.estimated_count}
+                    {plant.seedling_count}
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-800 font-medium">
                     {new Date(plant.date_planted).toLocaleDateString("en-US", {

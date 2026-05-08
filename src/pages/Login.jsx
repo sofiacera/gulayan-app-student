@@ -30,25 +30,30 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('') // Clear previous errors
+    setError('') 
 
     try {
-      const response = await api.post('/login', formData)
-      if (response.status === 200) {
-        // Assuming the server returns a token
-        const token = response.data.token
-        localStorage.setItem('token', token) // Store the token
-        navigate('/') // Redirect to dashboard
-      } else {
-        setError('Invalid credentials') // Set error message
-      }
-    } catch (error) {
-      setError('An error occurred while logging in') // Set error message
-      console.error('Login error:', error)
-    } finally {
-      setIsLoading(false)
-    }
+  const { email, password } = formData;
+  const response = await api.post('/login', { email, password });
 
+  // I-check natin kung may laman na token ang response
+  if (response.data && response.data.token) {
+    // 1. I-save ang token (Requirement para maging 'functional')
+    localStorage.setItem('token', response.data.token);
+    
+    // 2. Eto ang missing link: lipat sa Dashboard
+    navigate('/'); 
+  } else {
+    // Kung 200 OK pero walang token, dito siya babagsak
+    setError('Success pero walang token na nakuha.');
+  }
+} catch (error) {
+  // Kung mali ang password, dito siya titigil at mawawala ang loading
+  setError('Maling email o password.');
+} finally {
+  // Kaya tumitigil ang ikot dahil dito:
+  setIsLoading(false);
+}
   }
 
   return (
