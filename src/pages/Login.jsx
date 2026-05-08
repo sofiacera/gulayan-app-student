@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { FaSpinner } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 
 function Login() {
   const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,7 +22,10 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setIsLoading(true)
     //TODO make the login process functional
+
+    setIsLoading(false)
 
   }
 
@@ -87,10 +92,12 @@ function Login() {
             {/* TODO disable and show loading icon while logging in. */}
             <button
               type="submit"
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold 
+              disabled={isLoading}
+              className={`w-full bg-green-600 text-white py-3 rounded-lg font-semibold 
                             hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 
-                            focus:ring-offset-2 transition duration-200 shadow-md"
+                            focus:ring-offset-2 transition duration-200 shadow-md ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
+              {isLoading ? <FaSpinner className="animate-spin inline mr-2" /> : null}
               Sign In
             </button>
           </form>
@@ -111,7 +118,9 @@ function Login() {
             Don't have an account?{' '}
             <button
               onClick={() => navigate('/signup')}
-              className="cursor-pointer text-green-600 hover:text-green-700 font-semibold">
+              disabled={isLoading}
+              className={`cursor-pointer text-green-600 hover:text-green-700 font-semibold ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
               Sign up for free
             </button>
           </p>
